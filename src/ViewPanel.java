@@ -4,13 +4,17 @@
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
 
 public class ViewPanel extends JPanel {
 
     private Controller c;
+    private HashMap<Integer, County> countyList;
 
     public ViewPanel() {
+        this.setPreferredSize(new Dimension(1000, 1000));
         this.c = new Controller();
+        countyList = c.getCounties();
 
     }
 
@@ -18,6 +22,6 @@ public class ViewPanel extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
+        countyList.forEach((fips, county) -> county.draw(g));
     }
 }
