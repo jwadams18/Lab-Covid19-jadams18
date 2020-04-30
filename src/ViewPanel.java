@@ -13,15 +13,21 @@ public class ViewPanel extends JPanel {
 
     public ViewPanel() {
         this.setPreferredSize(new Dimension(1000, 1000));
+        this.setMaximumSize(new Dimension(1000, 1000));
         this.c = new Controller();
+        c.load();
         countyList = c.getCounties();
 
+    }
+
+    public Controller getController() {
+        return this.c;
     }
 
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        countyList.forEach((fips, county) -> county.draw(g));
+        countyList.forEach((fips, county) -> county.draw(g, c.getDisplay(), c.getRelativeDate()));
     }
 }
