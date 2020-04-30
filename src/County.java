@@ -10,11 +10,13 @@ public class County {
 
     private Integer FIPSID, population;
     private Coord[] coords;
-    private Map<String, Integer> cases; // < Date string, Num cases >
-    private Map<String, Integer> deaths;// < Date string, Num deaths >
+    private HashMap<String, Integer> cases; // < Date string, Num cases >
+    private HashMap<String, Integer> deaths;// < Date string, Num deaths >
     private Color color;
+    private int radius;
+    private Coord center;
 
-    public County(Integer FIPSID, Integer population, Coord[] coords, Color color) {
+    public County(Integer FIPSID, Integer population, Coord[] coords, Color color, Coord center) {
 
         this.FIPSID = FIPSID;
         this.population = population;
@@ -22,11 +24,16 @@ public class County {
         this.cases = new HashMap<>();
         this.deaths = new HashMap<>();
         this.color = color;
+        this.center = center;
 
     }
 
     public Integer getID() {
         return this.FIPSID;
+    }
+
+    public Integer getPopulation() {
+        return this.population;
     }
 
     public Map<String, Integer> getCases() {
@@ -37,7 +44,7 @@ public class County {
         return this.deaths;
     }
 
-    public void draw(Graphics g) {
+    public void draw(Graphics g, int display, String currentDate) {
 
         int[] xPoints = new int[coords.length];
         int[] yPoints = new int[coords.length];
@@ -53,6 +60,27 @@ public class County {
         g.setColor(Color.black);
         g.drawPolygon(xPoints, yPoints, xPoints.length);
 
+
+        if (display == 0) {
+            setRadius(this.cases, currentDate);
+        } else {
+            setRadius(this.deaths, currentDate);
+        }
+        g.setColor(new Color(255, 0, 0, 127));
+        g.fillOval((int) this.center.getLatitude(), (int) this.center.getLongitude(), getRadius(), getRadius());
+        g.setColor(Color.black);
+        g.drawOval((int) this.center.getLatitude(), (int) this.center.getLongitude(), getRadius(), getRadius());
+
+
+    }
+
+    //TODO finish getRadius so that I can draw the circle, consider date, and cases/deaths
+    public void setRadius(HashMap<String, Integer> data, String currentDate) {
+
+    }
+
+    public int getRadius() {
+        return 1;
     }
 
 }
