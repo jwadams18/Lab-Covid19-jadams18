@@ -9,6 +9,10 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -22,13 +26,42 @@ public class Model {
     }
 
     public Model() {
-        this.loadCounties();
-        this.loadVirusData();
     }
 
+    public boolean printDebug = true;
+    public int currentDisplay = 0; // 0 - Cases, 1 - Deaths
     public HashMap<Integer, County> countiesList = new HashMap<>();
+    public String firstDate = "2020-01-21";
+    public String recentDate, relativeDate;
+    public Date mostRecentDate, currentDate;
+    public int numDays, skippedUnknown = 0, skippedHIAL = 0;
 
 
+    //These methods can be private since the latest date in the data should only be changed when loading in data, not by guiControls
+    private void setRecentDate(String rd) {
+        this.recentDate = rd;
+    }
+
+    private void setMostRecentDate(Date mrd) {
+        this.mostRecentDate = mrd;
+    }
+
+    /**
+     * Uses the dates store when loading data to calculate the number of days, which will be used to set the max value of the slider on the GUI
+     */
+    public void calcNumDays() {
+        try {
+            numDays = (int) ChronoUnit.DAYS.between(new SimpleDateFormat("yyyy-MM-dd").parse(firstDate).toInstant(), new SimpleDateFormat("yyyy-MM-dd").parse(recentDate).toInstant());
+            return;
+        } catch (ParseException e) {
+            System.err.println("[ERROR] The number of days could not be calculated.");
+        }
+
+    }
+
+    /**
+     * Using the census data this will load the counties into a county object and draw
+     */
     public void loadCounties() {
         Path filePath = Paths.get("countyCoords.txt");
         File data = filePath.toFile();
@@ -58,18 +91,38 @@ public class Model {
 
                 fipsId = Integer.parseInt(fipsIdString);
                 population = Integer.parseInt(populationString);
+                Double firstLat = null, lastLat = 0.00, firstLong = null, lastLong = 0.00;
 
                 //Splits the line of coordinate pairs by spaces then commas
                 //This allows for each coordinate pair to be store
                 String[] coordPairs = coordsLine.split(" ");
                 coords = new Coord[coordPairs.length];
                 int counter = 0;
+                double currentLat, currentLong;
                 for (String coordPair : coordPairs) {
                     String[] coordinate = coordPair.split(",");
-                    Coord newCordinate = new Coord((1900 + Double.parseDouble(coordinate[0]) * 15), 1250 - Double.parseDouble(coordinate[1]) * 25);
+                    currentLat = Double.parseDouble(coordinate[0]);
+                    currentLong = Double.parseDouble(coordinate[1]);
+                    //Longitude, Latitude
+                    //Finds the first lat/long and the last to then find the mid point of the county to draw the circle
+                    if (firstLat == null) {
+                        firstLat = currentLat;
+                    }
+                    if (firstLong == null) {
+                        firstLong = currentLong;
+                    }
+                    if (lastLat <= currentLat) {
+                        lastLat = currentLat;
+                    }
+                    if (lastLong <= currentLong) {
+                        lastLong = currentLong;
+                    }
+                    Coord newCordinate = new Coord((1900 + currentLat * 15), 1400 - currentLong * 25);
                     coords[counter] = newCordinate;
                     counter++;
                 }
+
+                Coord midpoint = new Coord((lastLong - firstLong), (lastLat - firstLat));
                 //At this point we have an array of Coord type objects which can be used later to draw the outlines
                 //Now using this we need to handle the FIPSID and population lines to then create a county object
 //                countiesList.add(new County(Integer.parseInt(fipsId), Integer.parseInt(population), coords));
@@ -81,7 +134,7 @@ public class Model {
                     previousFipsID = fipsId;
                 }
 
-                countiesList.put(fipsId, new County(fipsId, population, coords, color));
+                countiesList.put(fipsId, new County(fipsId, population, coords, color, midpoint));
 //                fipsId = Integer.parseInt();
 //                population = Integer.parseInt(br.readLine());
 
@@ -101,6 +154,9 @@ public class Model {
         }
     }
 
+    /**
+     * Using the NYTimes data from the github link, this will load the cases/deaths per county and assign these values to the corresponding county
+     */
     public void loadVirusData() {
 
         String link = "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv";
@@ -130,35 +186,68 @@ public class Model {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        System.out.println("[SUCCESS] Loaded " + countiesList.size() + " counties' virus data");
+        if (printDebug) {
+            System.err.println("[WARNING] Skipped " + skippedUnknown + " lines of data due to unknown FIPS");
+            System.err.println("[WARNING] Skipped " + skippedHIAL + " lines of data containing entries from Hawaii/Alaska");
+            System.out.println("[SUCCESS] Loaded " + countiesList.size() + " counties' virus data");
+            System.out.println("First date: " + firstDate);
+            System.out.println("Most recent date: " + mostRecentDate.toInstant());
+        }
 
     }
 
+    /**
+     * This does the actual storage in the HashMaps for each county
+     *
+     * @param lineOfData the line read in from the github file
+     */
     public void storeEntry(String lineOfData) {
         String[] entries = lineOfData.split(",");
         County county = null;
         //Handles New York City not having a FIPS ID in the data we used
         if (entries[1].equals("New York City")) {
             county = countiesList.get(36061);
+            Map<String, Integer> countyMap = county.getCases();
+            countyMap.put(entries[0], Integer.parseInt(entries[4]));
+
+            county.getDeaths().put(entries[0], Integer.parseInt(entries[5]));
+            return;
         }
         //Removes bad data that doesnt have a FIPS id
         if (entries[3].length() == 0) {
-            System.err.println("[SKIPPED - Unknown FIPS] " + lineOfData);
+//            System.err.println("[SKIPPED - Unknown FIPS] " + lineOfData);
+            skippedUnknown++;
             return;
         }
         //Removes Hawaii/Alaska since we have not drawn them, or loaded from census data
         if (entries[3].substring(0, 2).equals("15") || entries[3].substring(0, 2).equals("02")) {
-            System.err.println("[SKIPPED - Alaska/Hawaii] " + lineOfData);
+//            System.err.println("[SKIPPED - Alaska/Hawaii] " + lineOfData);
+            skippedHIAL++;
             return;
         }
 
-        //Should be all the cases?
+
+        //Handled all special cases now loading as expected
         county = countiesList.get(Integer.parseInt(entries[3]));
         Map<String, Integer> countyMap = county.getCases();
-        countyMap.put(entries[1], Integer.parseInt(entries[4]));
+        countyMap.put(entries[0], Integer.parseInt(entries[4]));
 
-        county.getDeaths().put(entries[1], Integer.parseInt(entries[5]));
+        county.getDeaths().put(entries[0], Integer.parseInt(entries[5]));
+        setRecentDate(entries[0]);
+        boolean isLater;
+        //Tracking the most recent date
+        try {
+            mostRecentDate = new SimpleDateFormat("yyyy-MM-dd").parse(firstDate);
+            currentDate = new SimpleDateFormat("yyyy-MM-dd").parse(recentDate);
+
+            isLater = (int) (ChronoUnit.DAYS.between(mostRecentDate.toInstant(), currentDate.toInstant())) > 0;
+            if (isLater) {
+                setMostRecentDate(currentDate);
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
     }
 }
 
