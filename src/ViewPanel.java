@@ -15,6 +15,7 @@ public class ViewPanel extends JPanel {
         this.setPreferredSize(new Dimension(1000, 1000));
         this.setMaximumSize(new Dimension(1000, 1000));
         this.c = new Controller();
+        c.setViewPanel(this);
         c.load();
         countyList = c.getCounties();
 
@@ -23,7 +24,6 @@ public class ViewPanel extends JPanel {
     public Controller getController() {
         return this.c;
     }
-
 
     @Override
     protected void paintComponent(Graphics g) {
