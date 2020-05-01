@@ -2,6 +2,7 @@
 //    Lab-COVID-jadams18
 //    Controller.java
 
+import javax.swing.*;
 import java.util.HashMap;
 
 public class Controller {
@@ -18,6 +19,9 @@ public class Controller {
     }
 
     public String getRelativeDate() {
+        if (m.relativeDate == null) {
+            return m.firstDate;
+        }
         return m.relativeDate;
     }
 
@@ -46,5 +50,13 @@ public class Controller {
 
     public int getDisplay() {
         return m.currentDisplay;
+    }
+
+    public void setViewPanel(JPanel vp) {
+        m.viewPanel = vp;
+    }
+
+    public void viewPanelRepaint() {
+        m.viewPanel.repaint();
     }
 }
