@@ -15,6 +15,7 @@ public class County {
     private Color color;
     private int radius;
     private Coord center;
+    private Circle circle;
 
     public County(Integer FIPSID, Integer population, Coord[] coords, Color color, Coord center) {
 
@@ -26,15 +27,27 @@ public class County {
         this.color = color;
         this.center = center;
 
+        this.circle = new Circle(center);
+
     }
 
     public Integer getID() {
         return this.FIPSID;
     }
 
-    public Integer getPopulation() {
-        return this.population;
+    public void setCircleRadius(String currentDate, int display) {
+        Integer virusData;
+        if (display == 0) {
+            virusData = this.cases.get(currentDate);
+        } else {
+            virusData = this.deaths.get(currentDate);
+        }
+        if (virusData != null) {
+//            System.out.println(virusData);
+        }
+        this.circle.setRadius(virusData, this.population);
     }
+
 
     public Map<String, Integer> getCases() {
         return this.cases;
@@ -60,27 +73,13 @@ public class County {
         g.setColor(Color.black);
         g.drawPolygon(xPoints, yPoints, xPoints.length);
 
-
+        Integer virusData;
         if (display == 0) {
-            setRadius(this.cases, currentDate);
+            virusData = this.cases.get(currentDate);
         } else {
-            setRadius(this.deaths, currentDate);
+            virusData = this.deaths.get(currentDate);
         }
-        g.setColor(new Color(255, 0, 0, 127));
-        g.fillOval((int) this.center.getLatitude(), (int) this.center.getLongitude(), getRadius(), getRadius());
-        g.setColor(Color.black);
-        g.drawOval((int) this.center.getLatitude(), (int) this.center.getLongitude(), getRadius(), getRadius());
 
-
+        this.circle.draw(g, virusData, this.population);
     }
-
-    //TODO finish getRadius so that I can draw the circle, consider date, and cases/deaths
-    public void setRadius(HashMap<String, Integer> data, String currentDate) {
-
-    }
-
-    public int getRadius() {
-        return 1;
-    }
-
 }
