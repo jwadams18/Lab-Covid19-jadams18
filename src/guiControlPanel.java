@@ -42,7 +42,6 @@ public class guiControlPanel extends JPanel {
             }
 
             String oldDate = c.getRelativeDate();
-            System.out.println("Date before Addition: " + oldDate);
             //Specifying date format that matches the given date
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             Calendar cal = Calendar.getInstance();
@@ -58,9 +57,10 @@ public class guiControlPanel extends JPanel {
             //Date after adding the days to the given date
             String newDate = sdf.format(cal.getTime());
             //Displaying the new Date after addition of Days
-            System.out.println("Date after Addition: " + newDate);
             c.setRelativeDate(newDate);
             currentDate.setText("Current Date: " + newDate);
+            c.getCounties().forEach((k, v) -> v.setCircleRadius(c.getRelativeDate(), c.getDisplay()));
+            c.viewPanelRepaint();
         });
 
         currentDisplay = new JLabel("Currently displaying:  ");
@@ -68,7 +68,7 @@ public class guiControlPanel extends JPanel {
         constraints.gridx = 2;
         this.add(currentDisplay, constraints);
 
-        cases = new JRadioButton("cases");
+        cases = new JRadioButton("cases", true);
         deaths = new JRadioButton("deaths");
 
         buttonGroup = new ButtonGroup();
@@ -83,10 +83,14 @@ public class guiControlPanel extends JPanel {
 
         cases.addActionListener(event -> {
             c.setDisplay(0);
+            c.getCounties().forEach((k, v) -> v.setCircleRadius(c.getRelativeDate(), c.getDisplay()));
+            this.repaint();
         });
 
         deaths.addActionListener(event -> {
             c.setDisplay(1);
+            c.getCounties().forEach((k, v) -> v.setCircleRadius(c.getRelativeDate(), c.getDisplay()));
+            this.repaint();
         });
 
     }
