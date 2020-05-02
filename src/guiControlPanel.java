@@ -18,6 +18,11 @@ public class guiControlPanel extends JPanel {
     private Controller c;
     private int oldSliderValue = 0, deltaSlider;
 
+    /**
+     * Contains slider and radiobuttons that control what is displayed
+     *
+     * @param c
+     */
     public guiControlPanel(Controller c) {
 
         this.c = c;
@@ -80,6 +85,8 @@ public class guiControlPanel extends JPanel {
 
         constraints.gridx = 4;
         this.add(deaths, constraints);
+
+        //On action will change to correct display and update the circle for each county, and repaint
 
         cases.addActionListener(event -> {
             c.setDisplay(0);
