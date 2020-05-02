@@ -12,41 +12,51 @@ public class Circle {
     private Coord center;
     private int radius, alpha;
 
+    /**
+     * Used to display cases/deaths which can be updated based on the current date
+     *
+     * @param center
+     */
     public Circle(Coord center) {
 
         this.center = center;
         this.radius = 0;
+        //Set the color to be 50% transparent, so when the
+        //circle hits a certain radius it will stop growing to preserve
+        // visibility, and instead will "grow" darker with more cases/deaths
         this.alpha = 127;
 
     }
 
-    public void setRadius(Integer virusData, Integer population) {
+    /**
+     * Sets the radius of the circle, if null the radius is set to 0, then if it is less than some arbitrary value then it will be the count
+     * of cases/deaths once it passes that number the circle will become more red instead of expanding to prevent massive overlapping reducing visibility
+     *
+     * @param virusData
+     */
+    public void setRadius(Integer virusData) {
         if (virusData == null) {
             this.radius = 0;
             return;
         }
-        if (virusData >= 350) {
+        //Set in top of Model to a value that still allows other states to be visible
+        if (virusData >= Model.MAX_RADIUS) {
             if (this.alpha == 255) {
                 return;
             }
             this.alpha++;
             return;
         }
-//        System.out.println(virusData+" "+population);
-//        this.radius = (virusData*100 / (population/1000));
         // current radius just set to number of deaths/cases
         this.radius = virusData;
     }
 
-    public void draw(Graphics g, Integer virusData, Integer population) {
+    //Draws the circle with the radius, which is set based on the current date's cases/deaths for each county
+    public void draw(Graphics g, Integer virusData) {
 
-        setRadius(virusData, population);
+        setRadius(virusData);
         g.setColor(new Color(127, 0, 0, 127));
-        g.fillOval((int) (1900 + this.center.getLatitude() * 15) - getRadius() / 2, (int) (1400 - this.center.getLongitude() * 25) - getRadius() / 2, getRadius(), getRadius());
-//        if(getRadius() > 1);
-//        System.out.println("Drawing circle at "+this.center.toString()+" with radius of "+getRadius());
-//        g.setColor(Color.black);
-//        g.drawOval((int) this.center.getLatitude(), (int) this.center.getLongitude(), getRadius(), getRadius());
+        g.fillOval((int) (1900 + this.center.getLatitude() * 15) - getRadius() / 2, (int) (1300 - this.center.getLongitude() * 25) - getRadius() / 2, getRadius(), getRadius());
     }
 
     public int getRadius() {
