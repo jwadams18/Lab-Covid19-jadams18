@@ -11,12 +11,13 @@ public class Starter {
 
         JFrame frame = new JFrame("Covid tracker - Jadams18");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setPreferredSize(new Dimension(1000, 1000));
+        frame.setPreferredSize(new Dimension(925, 800));
+        frame.setResizable(false);
         frame.setVisible(true);
         frame.setLayout(new GridLayout());
 
         ViewPanel vpanel = new ViewPanel();
-        vpanel.setMinimumSize(new Dimension(925, 925));
+        vpanel.setPreferredSize(new Dimension(925, 800));
         guiControlPanel panel = new guiControlPanel(vpanel.getController());
 
         JSplitPane spane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, vpanel, panel);
