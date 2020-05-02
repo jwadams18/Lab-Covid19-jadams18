@@ -8,6 +8,12 @@ public class Coord {
     private double latitude;
 
 
+    /**
+     * Used to store Latitude and Longitude loaded in from census data
+     *
+     * @param longitude
+     * @param latitude
+     */
     public Coord(double longitude, double latitude) {
 
         this.longitude = longitude;
