@@ -11,9 +11,10 @@ public class ViewPanel extends JPanel {
     private Controller c;
     private HashMap<Integer, County> countyList;
 
+    /**
+     * Used to display the lower 48 states
+     */
     public ViewPanel() {
-        this.setPreferredSize(new Dimension(1000, 1000));
-        this.setMaximumSize(new Dimension(1000, 1000));
         this.c = new Controller();
         c.setViewPanel(this);
         c.load();
