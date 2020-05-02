@@ -17,6 +17,15 @@ public class County {
     private Coord center;
     private Circle circle;
 
+    /**
+     * Used to store the information loaded from the census data (location) and from the GitHub repo (Virus data)
+     *
+     * @param FIPSID     the ID which will be used to get specific county
+     * @param population
+     * @param coords     An array of coord objects which store Latitude and Longitude
+     * @param color      a random color to group states visually
+     * @param center     the midpoint of the county to center the circle around
+     */
     public County(Integer FIPSID, Integer population, Coord[] coords, Color color, Coord center) {
 
         this.FIPSID = FIPSID;
@@ -35,6 +44,12 @@ public class County {
         return this.FIPSID;
     }
 
+    /**
+     * Based on the current display, will get the cases or deaths for the current date
+     *
+     * @param currentDate a string that will be used to get cases/deaths
+     * @param display     0/1 - Cases/Deaths
+     */
     public void setCircleRadius(String currentDate, int display) {
         Integer virusData;
         if (display == 0) {
@@ -42,10 +57,7 @@ public class County {
         } else {
             virusData = this.deaths.get(currentDate);
         }
-        if (virusData != null) {
-//            System.out.println(virusData);
-        }
-        this.circle.setRadius(virusData, this.population);
+        this.circle.setRadius(virusData);
     }
 
 
@@ -57,12 +69,18 @@ public class County {
         return this.deaths;
     }
 
+    /**
+     * Draws the county outline, and fills with color based on state
+     * @param g
+     * @param display 0/1 - Cases/Deaths
+     * @param currentDate a string used to get data YYYY-MM-dd
+     */
     public void draw(Graphics g, int display, String currentDate) {
 
         int[] xPoints = new int[coords.length];
         int[] yPoints = new int[coords.length];
 
-
+        //Draws county outline
         for (int i = 0; i < coords.length; i++) {
             xPoints[i] = (int) coords[i].getLongitude();
             yPoints[i] = (int) coords[i].getLatitude();
@@ -73,6 +91,7 @@ public class County {
         g.setColor(Color.black);
         g.drawPolygon(xPoints, yPoints, xPoints.length);
 
+        //Draws circle outline
         Integer virusData;
         if (display == 0) {
             virusData = this.cases.get(currentDate);
@@ -80,6 +99,6 @@ public class County {
             virusData = this.deaths.get(currentDate);
         }
 
-        this.circle.draw(g, virusData, this.population);
+        this.circle.draw(g, virusData);
     }
 }
