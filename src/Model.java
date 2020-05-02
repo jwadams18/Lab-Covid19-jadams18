@@ -20,16 +20,14 @@ import java.util.Random;
 
 public class Model {
 
-    public static void main(String[] args) {
-        Model m = new Model();
-        m.loadCounties();
-        m.loadVirusData();
-    }
-
     public Model() {
     }
 
-    public boolean printDebug = true;
+    /**
+     * Constants and global variables
+     */
+    public static int MAX_RADIUS = 350;
+    public boolean printDebug = false;
     public int currentDisplay = 0; // 0 - Cases, 1 - Deaths
     public HashMap<Integer, County> countiesList = new HashMap<>();
     public String firstDate = "2020-01-21";
@@ -41,10 +39,20 @@ public class Model {
 
 
     //These methods can be private since the latest date in the data should only be changed when loading in data, not by guiControls
+
+    /**
+     * Used to update based on GitHub data
+     *
+     * @param rd
+     */
     private void setRecentDate(String rd) {
         this.recentDate = rd;
     }
 
+    /**
+     * Updates to most recent entry in GitHub data
+     * @param mrd
+     */
     private void setMostRecentDate(Date mrd) {
         this.mostRecentDate = mrd;
     }
@@ -84,10 +92,15 @@ public class Model {
             Integer previousFipsID = 0;
             Color color = Color.red;
 
-            //Used for Testing
-//            fw = new FileWriter("countiesPrint.txt");
-//            bw = new BufferedWriter(fw);
-//            pw = new PrintWriter(bw);
+            if (printDebug) {
+                FileWriter fw = new FileWriter("countiesPrint.txt");
+                BufferedWriter bw = new BufferedWriter(fw);
+                PrintWriter pw = new PrintWriter(bw);
+            }
+
+            /*
+            Goes through the county data file to create county objects
+             */
             while (fipsIdString != null && populationString != null && coordsLine != null) {
 
                 fipsId = Integer.parseInt(fipsIdString);
@@ -103,6 +116,7 @@ public class Model {
                 double deltaLong = 0;
                 double deltaLat = 0;
 
+                //After splitting in to coordinate pairs now need to split into Lat/Longitude
                 for (String coordPair : coordPairs) {
                     String[] coordinate = coordPair.split(",");
                     currentLat = Double.parseDouble(coordinate[0]);
@@ -116,8 +130,8 @@ public class Model {
                         firstLong = currentLong;
                     }
 
+                    //Find the midpoint of a county and stores it
                     double newDeltaLat = Math.abs(firstLat) - Math.abs(currentLat);
-//                    System.out.println("(delta, newDelta) "+deltaLat+","+newDeltaLat+" "+(newDeltaLat > deltaLat));
                     if (newDeltaLat > deltaLat) {
                         deltaLat = newDeltaLat;
                     }
@@ -128,15 +142,13 @@ public class Model {
                         deltaLong = newDeltaLong;
                     }
 
-                    Coord newCordinate = new Coord((1900 + currentLat * 15), 1400 - currentLong * 25);
+                    Coord newCordinate = new Coord((1900 + currentLat * 15), 1300 - currentLong * 25);
                     coords[counter] = newCordinate;
                     counter++;
                 }
                 Coord midpoint = new Coord(firstLong + (deltaLong / 2), firstLat + (deltaLat / 2));
-//               System.out.println(midpoint.toString());
                 //At this point we have an array of Coord type objects which can be used later to draw the outlines
                 //Now using this we need to handle the FIPSID and population lines to then create a county object
-//                countiesList.add(new County(Integer.parseInt(fipsId), Integer.parseInt(population), coords));
 
                 //Used to generate random color each new state based the change in FIPSID
                 if (fipsId - previousFipsID >= 650) {
@@ -152,7 +164,9 @@ public class Model {
                 coordsLine = br.readLine();
             }
 
-            System.out.println("[SUCCESS] Loaded " + countiesList.size() + " countries");
+            if (printDebug)
+                System.out.println("[SUCCESS] Loaded " + countiesList.size() + " counties");
+
         } catch (FileNotFoundException e) {
             System.err.println("Error: File not found");
             System.exit(-1);
@@ -178,6 +192,7 @@ public class Model {
         int counter = 0;
 
         try {
+            //Loads GitHub repo
             githubUrl = new URL(link);
             githubHTTP = (HttpURLConnection) githubUrl.openConnection();
             dataStream = githubHTTP.getInputStream();
@@ -206,7 +221,6 @@ public class Model {
 
     /**
      * This does the actual storage in the HashMaps for each county
-     *
      * @param lineOfData the line read in from the github file
      */
     public void storeEntry(String lineOfData) {
