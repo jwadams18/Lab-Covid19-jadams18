@@ -7,7 +7,7 @@ import java.util.HashMap;
 
 public class Controller {
 
-    private Model m;
+    private final Model m;
 
     public Controller() {
         this.m = new Model();
@@ -48,6 +48,9 @@ public class Controller {
      */
     public void load() {
         m.loadCounties();
+        if (m.printDebug) {
+            System.out.println("[DEBUG] Loading Virus Data");
+        }
         m.loadVirusData();
     }
 
