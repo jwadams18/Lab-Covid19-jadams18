@@ -23,18 +23,22 @@ public class Model {
     public Model() {
     }
 
+    //Prints all debug messages
+    public boolean printDebug = false;
+    //Prints all stats related to loading
+    public boolean printStats = true;
+
     /**
      * Constants and global variables
      */
     public static int MAX_RADIUS = 350;
-    public boolean printDebug = false;
     public int currentDisplay = 0; // 0 - Cases, 1 - Deaths
     public HashMap<Integer, County> countiesList = new HashMap<>();
     public String firstDate = "2020-01-21";
     public String recentDate;
     public String relativeDate;
     public Date mostRecentDate, currentDate;
-    public int numDays, skippedUnknown = 0, skippedHIAL = 0;
+    public int numDays, skippedUnknown = 0, skippedHIAL = 0, skippedVI = 0, skippedPR = 0, skippedMI = 0;
     public JPanel viewPanel;
 
 
@@ -46,6 +50,9 @@ public class Model {
      * @param rd
      */
     private void setRecentDate(String rd) {
+        if (printDebug) {
+            System.out.println("[DEBUG] Loading " + rd);
+        }
         this.recentDate = rd;
     }
 
@@ -164,7 +171,7 @@ public class Model {
                 coordsLine = br.readLine();
             }
 
-            if (printDebug)
+            if (printDebug || printStats)
                 System.out.println("[SUCCESS] Loaded " + countiesList.size() + " counties");
 
         } catch (FileNotFoundException e) {
@@ -209,10 +216,16 @@ public class Model {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (printDebug) {
+        if (printDebug || printStats) {
+            System.out.println("[SUCCESS] Loaded " + countiesList.size() + " counties' virus data");
             System.err.println("[WARNING] Skipped " + skippedUnknown + " lines of data due to unknown FIPS");
             System.err.println("[WARNING] Skipped " + skippedHIAL + " lines of data containing entries from Hawaii/Alaska");
-            System.out.println("[SUCCESS] Loaded " + countiesList.size() + " counties' virus data");
+            System.err.println("[WARNING] Skipped " + skippedVI + " lines of data containing entries from Virgin Islands");
+            System.err.println("[WARNING] Skipped " + skippedPR + " lines of data containing entries from Puerto Rico");
+            System.err.println("[WARNING] Skipped " + skippedMI + " lines of data containing entries from Mariana Islands");
+        }
+
+        if (printDebug) {
             System.out.println("[DEBUG] First date: " + firstDate);
             System.out.println("[DEBUG] Most recent date: " + mostRecentDate.toInstant());
         }
@@ -226,6 +239,10 @@ public class Model {
     public void storeEntry(String lineOfData) {
         String[] entries = lineOfData.split(",");
         County county = null;
+
+        if (printDebug) {
+            System.out.println("[DEBUG] " + entries[0] + " " + entries[1]);
+        }
         //Handles New York City not having a FIPS ID in the data we used
         if (entries[1].equals("New York City")) {
             county = countiesList.get(36061);
@@ -240,33 +257,58 @@ public class Model {
             skippedUnknown++;
             return;
         }
-        //Removes Hawaii/Alaska since we have not drawn them, or loaded from census data
-        if (entries[3].substring(0, 2).equals("15") || entries[3].substring(0, 2).equals("02")) {
+        //Removes regions that have not been drawn or loaded from census data, mainly regions outside of lower 48
+        if (entries[3].startsWith("15") || entries[3].startsWith("02")) {
             skippedHIAL++;
+            return;
+        }
+        //Virgin Islands case
+        if (entries[2].equals("Virgin Islands")) {
+            skippedVI++;
+            return;
+        }
+        //Puerto Rico case
+        if (entries[2].equals("Puerto Rico")) {
+            skippedPR++;
+            return;
+        }
+        //Mariana Islands case
+        if (entries[2].contains("Mariana Islands")) {
+            skippedMI++;
             return;
         }
 
 
         //Handled all special cases now loading as expected
         county = countiesList.get(Integer.parseInt(entries[3]));
-        Map<String, Integer> countyMap = county.getCases();
-        countyMap.put(entries[0], Integer.parseInt(entries[4]));
 
-        county.getDeaths().put(entries[0], Integer.parseInt(entries[5]));
-        setRecentDate(entries[0]);
-        boolean isLater;
-        //Tracking the most recent date
-        try {
-            mostRecentDate = new SimpleDateFormat("yyyy-MM-dd").parse(firstDate);
-            currentDate = new SimpleDateFormat("yyyy-MM-dd").parse(recentDate);
+        /*
+            9/29/2020 Provided a null check now, will make maintaining code easier when new
+            regions are added that are not in the lower 48.
+         */
+        if (county != null) {
+            Map<String, Integer> countyMap = county.getCases();
+            countyMap.put(entries[0], Integer.parseInt(entries[4]));
+            county.getDeaths().put(entries[0], Integer.parseInt(entries[5]));
+            setRecentDate(entries[0]);
+            boolean isLater;
+            //Tracking the most recent date
+            try {
+                mostRecentDate = new SimpleDateFormat("yyyy-MM-dd").parse(firstDate);
+                currentDate = new SimpleDateFormat("yyyy-MM-dd").parse(recentDate);
 
-            isLater = (int) (ChronoUnit.DAYS.between(mostRecentDate.toInstant(), currentDate.toInstant())) > 0;
-            if (isLater) {
-                setMostRecentDate(currentDate);
+                isLater = (int) (ChronoUnit.DAYS.between(mostRecentDate.toInstant(), currentDate.toInstant())) > 0;
+                if (isLater) {
+                    setMostRecentDate(currentDate);
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
             }
-        } catch (ParseException e) {
-            e.printStackTrace();
+        } else {
+            //Easiest way to produce feedback of data that is causing issues instead of looking for entry in raw github data
+            System.err.println("[ERROR] Issue loading " + entries[0] + " " + entries[1] + " " + entries[2]);
         }
+
 
     }
 }
