@@ -99,11 +99,6 @@ public class Model {
             Integer previousFipsID = 0;
             Color color = Color.red;
 
-            if (printDebug) {
-                FileWriter fw = new FileWriter("countiesPrint.txt");
-                BufferedWriter bw = new BufferedWriter(fw);
-                PrintWriter pw = new PrintWriter(bw);
-            }
 
             /*
             Goes through the county data file to create county objects
