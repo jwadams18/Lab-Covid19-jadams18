@@ -213,18 +213,13 @@ public class Model {
         }
         if (printDebug || printStats) {
             System.out.println("[SUCCESS] Loaded " + countiesList.size() + " counties' virus data");
+            System.out.println("[SUCCESS] Loaded data from " + firstDate + " to " + mostRecentDate.toInstant().toString().substring(0, 10));
             System.err.println("[WARNING] Skipped " + skippedUnknown + " lines of data due to unknown FIPS");
             System.err.println("[WARNING] Skipped " + skippedHIAL + " lines of data containing entries from Hawaii/Alaska");
             System.err.println("[WARNING] Skipped " + skippedVI + " lines of data containing entries from Virgin Islands");
             System.err.println("[WARNING] Skipped " + skippedPR + " lines of data containing entries from Puerto Rico");
             System.err.println("[WARNING] Skipped " + skippedMI + " lines of data containing entries from Mariana Islands");
         }
-
-        if (printDebug) {
-            System.out.println("[DEBUG] First date: " + firstDate);
-            System.out.println("[DEBUG] Most recent date: " + mostRecentDate.toInstant());
-        }
-
     }
 
     /**
